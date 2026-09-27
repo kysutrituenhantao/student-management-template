@@ -4,7 +4,14 @@
 the teacher the app was first built for, and is kept as the record of why each feature exists. The teacher who owns
 this copy adds her own rows at the end, and a row of hers replaces any earlier row it contradicts.
 
-The first product owner was a grade-4 homeroom teacher (giáo viên chủ nhiệm lớp 4). She wants an app to run her
+> **Credit.** Lớp Học Hạnh Phúc was conceived and shaped by **cô Phương Anh**, giáo viên chủ nhiệm lớp 4C, Trường
+> Tiểu học Lương Ninh, in September 2026. Every feature below comes from her briefs, written after days of teaching
+> with the app, and she chose to share it so that any teacher could build their own class app by talking to Claude,
+> without writing code. It was built by Claude with her brother Hào. The sáng kiến kinh nghiệm that describes it is
+> hers: *"Ứng dụng phần mềm quản lí thi đua trong xây dựng môi trường giáo dục tích cực, góp phần nâng cao chất lượng
+> giáo dục tại lớp 4C trường Tiểu học Lương Ninh"*. If you start from this template, keep this note.
+
+The first product owner, cô Phương Anh, is a grade-4 homeroom teacher (giáo viên chủ nhiệm lớp 4). She wants an app to run her
 class that, unlike the one she saw, **lets parents see their child's results and learning activities** ("App của họ
 tạo chưa có tương tác vs PH mà c muốn PH có thể xem đc kết quả và hoạt động học của con"). This file traces every
 requirement to where it lives in the app, so she can check it, and records the calls made where she didn't say.

@@ -7,13 +7,18 @@
 # Docker Desktop is not installed on purpose: setup.sh puts Docker Engine inside Ubuntu, which needs no window,
 # licence prompt or tray icon.
 
-$ErrorActionPreference = 'Stop'
+# Not 'Stop': in Windows PowerShell 5.1 that turns any text a native program (wsl.exe, winget) writes to stderr into a
+# fatal error, e.g. "WSL is not installed" on the very machine this script is here to fix. Exit codes are checked instead.
+$ErrorActionPreference = 'Continue'
 $Template = if ($env:LOPHOC_TEMPLATE) { $env:LOPHOC_TEMPLATE } else { 'haophuongwedding/student-management-template' }
 $Distro = 'Ubuntu-24.04'
 $LinuxLine = "bash <(curl -fsSL https://raw.githubusercontent.com/$Template/master/setup/setup.sh)"
 $env:WSL_UTF8 = '1' # wsl.exe prints UTF-16 otherwise, and -match finds nothing
 
 function Say($text) { Write-Host $text }
+# The distributions WSL has, one per line; empty when WSL itself is missing. Through cmd so stderr never reaches
+# PowerShell, and with NULs stripped in case this wsl.exe ignores WSL_UTF8 and answers in UTF-16.
+function Get-Distros { ((cmd.exe /c 'wsl.exe -l -q 2>nul') -join "`n") -replace "`0", '' }
 function Step($text) { Write-Host ''; Write-Host "== $text ==" -ForegroundColor Green }
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -41,11 +46,15 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 }
 
 Step '3/3 · Cài Ubuntu (WSL)'
-$installed = (wsl.exe -l -q 2>$null) -join "`n"
-if ($installed -notmatch [regex]::Escape($Distro)) {
+if ((Get-Distros) -notmatch [regex]::Escape($Distro)) {
+  Say 'Đang cài WSL và Ubuntu (5–10 phút, có thể hiện thanh tiến trình)...'
   wsl.exe --install -d $Distro --no-launch
-  $installed = (wsl.exe -l -q 2>$null) -join "`n"
-  if ($installed -notmatch [regex]::Escape($Distro)) {
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host ''
+    Write-Host "Cài WSL chưa được (mã $LASTEXITCODE). Nếu máy báo cần bật ảo hoá (Virtualization) thì bật trong BIOS; nếu không, khởi động lại máy rồi dán lại dòng lệnh." -ForegroundColor Yellow
+    return
+  }
+  if ((Get-Distros) -notmatch [regex]::Escape($Distro)) {
     Write-Host ''
     Write-Host 'Cần khởi động lại máy tính một lần. Khởi động lại xong, mở lại PowerShell (Run as administrator) và dán lại đúng dòng lệnh lúc nãy.' -ForegroundColor Yellow
     return
