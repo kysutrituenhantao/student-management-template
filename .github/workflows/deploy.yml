@@ -1,0 +1,89 @@
+name: Deploy
+
+# Called by CI after tests pass on master. Can also be run by hand once GitHub has indexed this file
+# (until then, push to master: CI calls it).
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # No `environment:` here: environments need a paid plan on private repos.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
+      SITE_URL: ${{ vars.SITE_URL || (vars.CUSTOM_DOMAIN && format('https://{0}', vars.CUSTOM_DOMAIN)) || '' }}
+      CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+    steps:
+      - name: Check Cloudflare is configured
+        id: gate
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$D1_DATABASE_ID" ] || [ -z "$SITE_URL" ]; then
+            echo "::notice title=Deploy skipped::Cloudflare secrets, D1_DATABASE_ID or SITE_URL/CUSTOM_DOMAIN are not set yet. See docs/DEPLOY.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: steps.gate.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Build the static site
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ env.SITE_URL }}
+        run: npm run build:web
+
+      - name: Production Worker config
+        if: steps.gate.outputs.ready == 'true'
+        run: node scripts/prod-config.mjs
+
+      - name: Apply D1 migrations
+        if: steps.gate.outputs.ready == 'true'
+        working-directory: apps/api
+        run: npx wrangler d1 migrations apply lop-hoc-hanh-phuc --remote -c wrangler.production.jsonc
+
+      - name: Deploy the Worker, static assets and secrets
+        if: steps.gate.outputs.ready == 'true'
+        working-directory: apps/api
+        env:
+          TEACHER_INVITE_CODE: ${{ secrets.TEACHER_INVITE_CODE }}
+        run: |
+          set -o pipefail
+          trap 'rm -f /tmp/secrets.json' EXIT
+          node ../../scripts/write-secrets.mjs /tmp/secrets.json
+          npx wrangler deploy -c wrangler.production.jsonc --secrets-file /tmp/secrets.json | tee /tmp/deploy.log
+
+      - name: Smoke test the live site
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          if [ -n "$CUSTOM_DOMAIN" ]; then BASE="https://$CUSTOM_DOMAIN"; else BASE=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1); fi
+          echo "Checking $BASE"
+          # A workers.dev name registered minutes ago can take a while to resolve on the first deploy.
+          for _ in $(seq 1 40); do curl -sf "$BASE/api/health" && break; sleep 6; done
+          curl -sf "$BASE/api/health" | grep -q '"environment":"production"'
+          curl -sf "$BASE/" | grep -q "<title>Lớp Học Hạnh Phúc</title>"
+          echo "### Deployed to $BASE" >> "$GITHUB_STEP_SUMMARY"

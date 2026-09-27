@@ -1,0 +1,30 @@
+{
+  "name": "lop-hoc-hanh-phuc",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web",
+    "e2e"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present && node --test scripts/*.test.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "build:web": "npm run build -w @lhhp/web",
+    "stack:up": "docker compose up --build -d --wait",
+    "stack:down": "docker compose down",
+    "stack:reset": "docker compose down -v",
+    "e2e": "docker compose --profile test run --rm e2e",
+    "logs:check": "bash scripts/check-logs.sh",
+    "smoke:prod": "bash scripts/prod-smoke.sh"
+  },
+  "overrides": {
+    "vite": "^7.3.6",
+    "postcss": "^8.5.28",
+    "sharp": "^0.35.4"
+  }
+}

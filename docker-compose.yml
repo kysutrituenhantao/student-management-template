@@ -1,0 +1,110 @@
+# Local stack that mirrors production:
+#   edge (Cloudflare) → web (static assets) + api (Worker) → db (D1 / SQLite)
+# App: http://localhost:8080   API: :8787   DB browser: :8081
+name: lophochanhphuc
+
+x-api-env: &api-env
+  ENVIRONMENT: development
+  LOG_LEVEL: info
+  SITE_URL: http://localhost:8080
+  TEACHER_INVITE_CODE: ${TEACHER_INVITE_CODE:-lop-hoc-hanh-phuc-local}
+  # Loads the sample class on a fresh database. Never set in production.
+  SEED_DEMO: ${SEED_DEMO:-1}
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: lophochanhphuc-api:local
+    command: ["serve"]
+    environment: *api-env
+    volumes:
+      - d1-data:/data
+    ports:
+      - "8787:8787"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: http://localhost:8080
+    image: lophochanhphuc-web:local
+    ports:
+      - "3001:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  db:
+    build:
+      context: .
+      dockerfile: docker/db/Dockerfile
+    image: lophochanhphuc-db:local
+    volumes:
+      - d1-data:/data
+    ports:
+      - "8081:8081"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  edge:
+    image: caddy:2.10-alpine
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+
+  e2e:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: e2e/Dockerfile
+    image: lophochanhphuc-e2e:local
+    environment:
+      BASE_URL: http://edge:8080
+      TEACHER_INVITE_CODE: ${TEACHER_INVITE_CODE:-lop-hoc-hanh-phuc-local}
+      CI: ${CI:-}
+    volumes:
+      - ./e2e/test-results:/app/e2e/test-results
+      - ./e2e/playwright-report:/app/e2e/playwright-report
+    depends_on:
+      edge:
+        condition: service_started
+
+  # Hot-reload frontend for design work: http://localhost:3000 (API proxied to the api service).
+  web-dev:
+    profiles: ["dev"]
+    image: node:22-bookworm-slim
+    working_dir: /app/apps/web
+    command: ["sh", "-c", "npm ci --no-audit --no-fund --prefix /app >/dev/null && npx next dev -H 0.0.0.0 -p 3000"]
+    environment:
+      API_ORIGIN: http://api:8787
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - .:/app
+      - web-dev-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  d1-data:
+  web-dev-modules:

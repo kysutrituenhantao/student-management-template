@@ -1,0 +1,13 @@
+{
+  "name": "@lhhp/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.15.0",
+    "typescript": "~5.9.3"
+  }
+}

@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+apps/web/out
+apps/api/.wrangler
+apps/api/.dev.vars
+apps/api/.generated
+e2e/test-results
+e2e/playwright-report
+.git
+.github
+docs
+*.log
+*.mp4
+.DS_Store

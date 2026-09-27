@@ -1,0 +1,35 @@
+import { Hono } from "hono";
+import type { AppEnv } from "../types";
+import { requireTeacher } from "../lib/session";
+import { attendanceRoutes } from "./teacher/attendance";
+import { boardRoutes } from "./teacher/board";
+import { classRoutes } from "./teacher/classes";
+import { commsRoutes } from "./teacher/comms";
+import { competitionRoutes } from "./teacher/competition";
+import { fileRoutes } from "./teacher/files";
+import { honourRoutes } from "./teacher/honours";
+import { pointRoutes } from "./teacher/points";
+import { profileRoutes } from "./teacher/profiles";
+import { reportRoutes } from "./teacher/reports";
+import { rewardRoutes } from "./teacher/rewards";
+import { studentAdminRoutes } from "./teacher/students";
+import { taskRoutes } from "./teacher/tasks";
+import { workRoutes } from "./teacher/works";
+
+/** Everything under /api/t needs a signed-in teacher, and each route checks the class is hers. */
+export const teacherRoutes = new Hono<AppEnv>();
+teacherRoutes.use("*", requireTeacher);
+teacherRoutes.route("/", classRoutes);
+teacherRoutes.route("/", studentAdminRoutes);
+teacherRoutes.route("/", pointRoutes);
+teacherRoutes.route("/", taskRoutes);
+teacherRoutes.route("/", rewardRoutes);
+teacherRoutes.route("/", commsRoutes);
+teacherRoutes.route("/", reportRoutes);
+teacherRoutes.route("/", boardRoutes);
+teacherRoutes.route("/", profileRoutes);
+teacherRoutes.route("/", attendanceRoutes);
+teacherRoutes.route("/", honourRoutes);
+teacherRoutes.route("/", workRoutes);
+teacherRoutes.route("/", fileRoutes);
+teacherRoutes.route("/", competitionRoutes);

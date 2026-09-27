@@ -1,0 +1,86 @@
+name: CI
+
+# Private repo on the free plan (2,000 Actions minutes/month): run on pull requests and on master only,
+# so a branch push with an open PR doesn't run everything twice.
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["**/*.md", "docs/**"]
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit tests, types, lint, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Types
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit and integration tests (shared, API on workerd + D1, web, scripts)
+        run: npm test
+      - name: Build the static site
+        run: npm run build:web
+      - name: Production parity (real Worker config, assets, local D1)
+        run: bash scripts/prod-smoke.sh
+      - name: Worker bundle fits the free plan
+        working-directory: apps/api
+        run: npx wrangler deploy --dry-run --outdir /tmp/worker -c wrangler.production.jsonc
+
+  e2e:
+    name: End-to-end (docker compose)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the stack
+        run: docker compose up --build -d --wait
+      - name: Playwright
+        run: docker compose --profile test run --rm e2e
+      - name: Logs are clean
+        run: bash scripts/check-logs.sh
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --no-color > compose-logs.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            compose-logs.txt
+          retention-days: 7
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
+
+  deploy:
+    name: Deploy
+    needs: [test, e2e]
+    # A manual run deploys too: setup/setup.sh starts the first deploy that way, since a push that only touches Markdown
+    # skips CI.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      ref: ${{ github.sha }}
+    secrets: inherit

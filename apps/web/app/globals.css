@@ -1,0 +1,805 @@
+@import "tailwindcss";
+
+/*
+ * Lớp Học Hạnh Phúc
+ * Paper is a Vietnamese "vở ô li" exercise book: a pale blue grid with a pink margin line.
+ * Every child is a sticker. The teacher's voice is red pen. Drops are gold foil.
+ */
+:root {
+  --ink: #3b2a4a;
+  --ink-soft: #6b5a7b;
+  --line: #e8ddf0;
+  --paper: #ffffff;
+  --page: #fbfcff;
+  --pink: #ff8fb8;
+  --pink-soft: #ffe3ee;
+  --pink-ink: #c2336a;
+  --blue: #a9dbf5;
+  --blue-soft: #e6f4fc;
+  --blue-ink: #2b6cb0;
+  --gold: #ffd84d;
+  --gold-soft: #fff7d9;
+  --gold-ink: #8a6200;
+  --mint: #a8e6c3;
+  --mint-ink: #22744a;
+  --red-pen: #d7263d;
+  --board: #2f6b50;
+  --board-frame: #b98552;
+  --grid-major: rgba(118, 150, 224, 0.2);
+  --grid-minor: rgba(118, 150, 224, 0.08);
+  --margin-line: rgba(255, 110, 160, 0.42);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-paper: var(--paper);
+  --color-page: var(--page);
+  --color-pink: var(--pink);
+  --color-pink-soft: var(--pink-soft);
+  --color-pink-ink: var(--pink-ink);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-ink: var(--blue-ink);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-ink: var(--gold-ink);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-red-pen: var(--red-pen);
+  --color-board: var(--board);
+  --font-display: var(--font-baloo), "Baloo 2", system-ui, sans-serif;
+  --font-sans: var(--font-bevn), "Be Vietnam Pro", system-ui, sans-serif;
+  --font-hand: var(--font-mali), "Mali", "Comic Sans MS", cursive;
+}
+
+@layer base {
+  html {
+    color: var(--ink);
+    background: var(--page);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+    min-height: 100dvh;
+    background-color: var(--page);
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(var(--grid-minor) 1px, transparent 1px);
+    background-size:
+      32px 32px,
+      32px 32px,
+      8px 8px;
+  }
+  /* The margin line of the exercise book, on screens wide enough to spare it. */
+  @media (min-width: 900px) {
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 auto 0 40px;
+      width: 2px;
+      background: var(--margin-line);
+      pointer-events: none;
+      z-index: 0;
+    }
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    line-height: 1.12;
+    letter-spacing: -0.005em;
+  }
+  :focus-visible {
+    outline: 3px solid var(--pink-ink);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  button,
+  [role="button"],
+  select,
+  summary {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  /* A grid item may shrink below its content: one long name must never widen the page on a phone. */
+  :where(.grid) > * {
+    min-width: 0;
+  }
+  ::selection {
+    background: var(--pink);
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* A sheet laid on the exercise book. Flat: paper doesn't float. */
+  .paper {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+  }
+
+  /* Die-cut sticker: white body, white border, a tinted outline and a solid offset shadow in the group colour. */
+  .sticker {
+    --edge: #f3c2d6;
+    --lift: #f7b6cd;
+    background: var(--paper);
+    border: 3px solid var(--paper);
+    border-radius: 22px;
+    box-shadow:
+      0 0 0 2px var(--edge),
+      0 5px 0 1px var(--lift);
+    transition: transform 160ms ease;
+  }
+  .sticker[data-selected="true"] {
+    box-shadow:
+      0 0 0 3px var(--pink-ink),
+      0 5px 0 2px var(--pink-ink);
+  }
+  .group-0 { --edge: #e2d9ee; --lift: #d9cfe8; }
+  .group-1 { --edge: #ffc2d8; --lift: #ffa9c7; }
+  .group-2 { --edge: #bfe4f8; --lift: #93cdee; }
+  .group-3 { --edge: #ffe48f; --lift: #f5cf4a; }
+  .group-4 { --edge: #bdebd1; --lift: #8fd8ae; }
+  .group-5 { --edge: #ddd0f7; --lift: #c3aef0; }
+  .group-6 { --edge: #ffd6b8; --lift: #ffba88; }
+  .group-7 { --edge: #b6eeeb; --lift: #7fdcd6; }
+  .group-8 { --edge: #e2f3b5; --lift: #c9e57b; }
+
+  /*
+   * Bảng tin: a wall of paper notes pinned up, the way a Padlet board reads. The wall is a masonry of columns,
+   * so a note with a photo and a note with one line sit side by side without a gap under either.
+   */
+  .wall {
+    columns: 1;
+    column-gap: 1rem;
+  }
+  @media (min-width: 640px) {
+    .wall { columns: 2; }
+  }
+  @media (min-width: 1100px) {
+    .wall { columns: 3; }
+  }
+  @media (min-width: 1500px) {
+    .wall { columns: 4; }
+  }
+  .wall > * {
+    break-inside: avoid;
+    margin: 0 0 1rem;
+  }
+
+  .note {
+    --note-paper: #fff8d6;
+    --note-edge: #f0dd9a;
+    position: relative;
+    background: var(--note-paper);
+    border: 1.5px solid var(--note-edge);
+    border-radius: 18px;
+    box-shadow:
+      0 2px 0 var(--note-edge),
+      0 8px 16px rgba(59, 42, 74, 0.07);
+  }
+  .note-vang { --note-paper: #fff8d6; --note-edge: #f0dd9a; }
+  .note-hong { --note-paper: #ffe9f1; --note-edge: #f8c6d8; }
+  .note-xanh { --note-paper: #e6f4fc; --note-edge: #b9ddf1; }
+  .note-bac_ha { --note-paper: #e4f7ec; --note-edge: #b4e3c8; }
+  .note-tim { --note-paper: #f1eaff; --note-edge: #d6c6f5; }
+  .note-cam { --note-paper: #fff0e2; --note-edge: #f9d2ad; }
+
+  /*
+   * "Giao diện các bảng tin đa dạng hơn, có các sticker trong mỗi ô padlet" (brief 4, item 6).
+   * One note, cut four ways, and a sticker stuck on the corner of it.
+   */
+  .note-nhan {
+    border-radius: 28px 8px 28px 8px;
+    transform: rotate(-1.1deg);
+  }
+  .note-nhan:nth-child(even) {
+    transform: rotate(1deg);
+  }
+  .note-khung {
+    border-width: 6px;
+    border-radius: 12px;
+  }
+  .note-bang {
+    /* The green board at the front of the class: the ink of everything inside turns to chalk. */
+    --ink: #f6f3ea;
+    --ink-soft: #cfe3d8;
+    --pink-ink: #ffd3e3;
+    --line: rgba(255, 255, 255, 0.35);
+    background-color: var(--board);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 5px 5px;
+    border-color: var(--board-frame);
+    border-width: 5px;
+    color: var(--ink);
+  }
+  /*
+   * Sửa and Xoá carry a pale pill of their own, so on a board tile their ink goes back to normal. The rest of the
+   * footer — the heart, Bình luận, the time — sits straight on the dark green and stays chalk.
+   */
+  .note-bang .btn-ghost {
+    --ink: #3b2a4a;
+    --ink-soft: #6b5a7b;
+    --line: #e8ddf0;
+    --red-pen: #c01f34;
+  }
+  .note-sticker {
+    position: absolute;
+    top: -0.55rem;
+    left: -0.5rem;
+    font-size: 1.9rem;
+    line-height: 1;
+    transform: rotate(-14deg);
+    filter: drop-shadow(0 2px 2px rgba(59, 42, 74, 0.25));
+    pointer-events: none;
+  }
+
+  /* A pinned note wears its pin, and sits a little proud of the wall. */
+  .note[data-pinned="true"] {
+    box-shadow:
+      0 0 0 2px var(--pink),
+      0 2px 0 var(--note-edge),
+      0 10px 20px rgba(59, 42, 74, 0.1);
+  }
+
+  /* The teacher's red pen: remarks, scores and evaluations. */
+  .red-pen {
+    font-family: var(--font-hand);
+    color: var(--red-pen);
+  }
+  /* A score circled by hand. */
+  .score-ring {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.6em;
+    padding: 0.1em 0.45em;
+    border: 2px solid var(--red-pen);
+    border-radius: 50% 46% 52% 48% / 55% 50% 48% 45%;
+    transform: rotate(-4deg);
+  }
+
+  /* The green board at the front of the class. */
+  .chalkboard {
+    background-color: var(--board);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 5px 5px;
+    border: 8px solid var(--board-frame);
+    border-radius: 6px;
+    color: #f4f1e6;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    line-height: 1.2;
+    transition:
+      transform 120ms ease,
+      background-color 120ms ease;
+    user-select: none;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+  }
+  .btn-primary {
+    background: var(--pink-ink);
+    color: #fff;
+    box-shadow: 0 3px 0 #8f1f4b;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #ad2a5d;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: 0 3px 0 #d9ad16;
+  }
+  .btn-soft {
+    background: var(--pink-soft);
+    color: var(--pink-ink);
+  }
+  .btn-soft:hover:not(:disabled) {
+    background: #ffd3e3;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: #fff;
+    border-color: #d8c8e6;
+  }
+  .btn-danger {
+    background: #fff;
+    color: var(--red-pen);
+    border: 1.5px solid #f3b3bc;
+  }
+  .btn-sm {
+    min-height: 40px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.875rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .field > span,
+  .field > label {
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+  .input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 0.8rem;
+    border-radius: 12px;
+    border: 1.5px solid #d9cce6;
+    background: #fff;
+    color: var(--ink);
+    font-size: 1rem;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--pink-ink);
+    box-shadow: 0 0 0 3px var(--pink-soft);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--red-pen);
+  }
+  textarea.input {
+    min-height: 96px;
+    line-height: 1.5;
+  }
+  .field-error {
+    color: var(--red-pen);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 40px;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-selected="true"] {
+    background: var(--pink-ink);
+    border-color: var(--pink-ink);
+    color: #fff;
+  }
+
+  /* A gold foil drop count. */
+  .point-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-weight: 700;
+    color: var(--gold-ink);
+  }
+
+  .tabbar {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0.4rem;
+  }
+  .tabbar::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    padding: 0.45rem 0.7rem;
+    border-radius: 14px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .tab:hover {
+    background: var(--pink-soft);
+    color: var(--ink);
+  }
+  .tab[aria-selected="true"] {
+    background: var(--pink-soft);
+    color: #a3285a;
+    box-shadow: inset 0 -3px 0 var(--pink);
+  }
+
+  /*
+   * The teacher's toolbar (brief 5: "dồn thanh công cụ lên 1 hàng… không để thông tin ra khỏi màn hình").
+   * On a laptop, ten buttons on one row that share the width between them. Too narrow for that, every button
+   * becomes a small tile — picture over name, five or ten across — so all ten are still on the screen at once.
+   * It never scrolls sideways: that is how a family's message once went unread for two days.
+   */
+  .toolbar {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .toolbar .tool {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Pictures in a line along the top, whether the name under them takes one line or two. */
+    justify-content: flex-start;
+    gap: 0.1rem;
+    min-width: 0;
+    min-height: 52px;
+    padding: 0.3rem 0.2rem;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .toolbar .tool > .tool-emoji {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  .toolbar .tool > .tool-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+  }
+  .toolbar .tool:hover {
+    background: var(--pink-soft);
+    color: var(--ink);
+  }
+  .toolbar .tool[aria-selected="true"] {
+    background: var(--pink-soft);
+    color: #a3285a;
+    box-shadow: inset 0 -3px 0 var(--pink);
+  }
+  @media (min-width: 768px) {
+    .toolbar {
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1280px) {
+    .toolbar {
+      display: flex;
+      gap: 0.2rem;
+    }
+    .toolbar .tool {
+      flex: 1 1 auto;
+      flex-direction: row;
+      justify-content: center;
+      gap: 0.35rem;
+      min-height: 44px;
+      padding: 0.45rem 0.45rem;
+      font-size: 0.9375rem;
+      white-space: nowrap;
+    }
+    .toolbar .tool > .tool-emoji {
+      font-size: 1rem;
+    }
+    .toolbar .tool > .tool-badge {
+      position: static;
+    }
+  }
+
+
+  /*
+   * Nhiệm vụ as Padlet squares (brief 9): "bố cục ô vuông như Padlet, tự động thay đổi màu chọn gam màu pastel nhẹ
+   * nhàng". A tile is at least as tall as it is wide and grows only when its text needs it; its paper is one of eight
+   * pastels, chosen from the task so neighbours differ and a task keeps its colour.
+   */
+  .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+    gap: 0.9rem;
+  }
+  @media (min-width: 640px) {
+    .task-grid {
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1.1rem;
+    }
+  }
+  /*
+   * Brief 10: "mỗi nhiệm vụ là 1 tờ giấy note có đính đinh ghim… dễ thương phù hợp với học sinh". A square sticky
+   * note: straight paper corners, a folded bottom-right corner, a shadow that lifts at the bottom edge, and a pushpin
+   * at the top whose colour comes from the task. It hangs straight: "đặt thẳng k để nghiêng" (brief 12).
+   */
+  .task-tile {
+    --fold: 26px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 1;
+    min-width: 0;
+    margin-top: 12px;
+    padding: 1.35rem 1rem 0.9rem;
+    border-radius: 3px 3px 3px 3px;
+    /* The folded corner: the paper stops short of the corner, and a darker triangle is the back of the fold. */
+    background-image:
+      linear-gradient(135deg, transparent calc(50% - 0.5px), rgb(0 0 0 / 0.1) 50%, rgb(255 255 255 / 0.55) 60%, transparent 100%),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.35), transparent 30%);
+    background-size: var(--fold) var(--fold), 100% 100%;
+    background-position: right bottom, 0 0;
+    background-repeat: no-repeat;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+    color: var(--ink);
+    overflow-wrap: anywhere;
+    /* Brief 11: the same square however long the task; the text inside is cut to fit (.task-body). */
+    overflow: hidden;
+  }
+  .task-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .task-body {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: pre-wrap;
+    pointer-events: none;
+  }
+  /* The whole task, opened: the same pastel paper, without the pin or the fold. */
+  .task-read.pastel-0 { background: #ffe3ec; }
+  .task-read.pastel-1 { background: #e3f1ff; }
+  .task-read.pastel-2 { background: #fff4cc; }
+  .task-read.pastel-3 { background: #dff7ea; }
+  .task-read.pastel-4 { background: #efe6ff; }
+  .task-read.pastel-5 { background: #ffe9d9; }
+  .task-read.pastel-6 { background: #dcf5f7; }
+  .task-read.pastel-7 { background: #f3f7d9; }
+  /* The clip-path would cut the pin off the top of the paper, so the paper is drawn by a layer beneath it. */
+  .task-note {
+    position: relative;
+    min-width: 0;
+    filter: drop-shadow(0 7px 7px rgb(60 40 90 / 0.2)) drop-shadow(0 1px 1px rgb(60 40 90 / 0.14));
+    transition: transform 160ms ease;
+  }
+  .task-note:hover,
+  .task-note:focus-within {
+    transform: translateY(-3px);
+  }
+  .task-pin {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    z-index: 1;
+    width: 30px;
+    height: 34px;
+    transform: translateX(-50%) rotate(8deg);
+    filter: drop-shadow(1px 3px 2px rgb(40 20 60 / 0.35));
+    pointer-events: none;
+  }
+  .task-pin.pin-0 { color: #ef4f6c; }
+  .task-pin.pin-1 { color: #3f8ef0; }
+  .task-pin.pin-2 { color: #f5b400; }
+  .task-pin.pin-3 { color: #2fb77a; }
+  .task-pin.pin-4 { color: #9a62e8; }
+  @media (prefers-reduced-motion: reduce) {
+    .task-note {
+      transition: none;
+    }
+  }
+  .task-tile.pastel-0 { background: #ffe3ec; }
+  .task-tile.pastel-1 { background: #e3f1ff; }
+  .task-tile.pastel-2 { background: #fff4cc; }
+  .task-tile.pastel-3 { background: #dff7ea; }
+  .task-tile.pastel-4 { background: #efe6ff; }
+  .task-tile.pastel-5 { background: #ffe9d9; }
+  .task-tile.pastel-6 { background: #dcf5f7; }
+  .task-tile.pastel-7 { background: #f3f7d9; }
+
+  .progress {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--gold-soft);
+    border: 1.5px solid #f3dc8a;
+    overflow: hidden;
+  }
+  .progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: repeating-linear-gradient(-45deg, var(--gold), var(--gold) 8px, #ffe27d 8px, #ffe27d 16px);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+  }
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    z-index: 100;
+    background: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+  }
+}
+
+/* The one orchestrated motion: drops fly off a sticker when it earns them. */
+@keyframes point-rise {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -8px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -46px) scale(1); }
+}
+@keyframes sparkle {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  40% { opacity: 1; transform: scale(1.1) rotate(20deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(40deg); }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-3deg) scale(1.03); }
+  60% { transform: rotate(2deg); }
+}
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(var(--dx, 0), 105vh, 0) rotate(720deg); opacity: 1; }
+}
+/* Chiếc mũ bí mật (brief 14): the hat jolts and sparkles rise while the wand works on it. */
+@keyframes hat-shake {
+  0%, 38%, 100% { transform: translateY(0) rotate(0deg); }
+  48% { transform: translateY(3px) rotate(-1.5deg); }
+  58% { transform: translateY(0) rotate(1deg); }
+}
+@keyframes hat-sparkle {
+  0% { transform: translateY(40px) scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-40px) scale(1.1); opacity: 0; }
+}
+/* Brief 16: the magician's wand sweeps over the hat and points into it; then smoke and stars — the transformation. */
+@keyframes wand-wave {
+  0%, 100% { transform: rotate(14deg) translate(8px, -10px); }
+  35% { transform: rotate(-22deg) translate(-4px, 6px); }
+  50% { transform: rotate(-30deg) translate(-10px, 16px); }
+  65% { transform: rotate(-22deg) translate(-4px, 6px); }
+}
+@keyframes wand-spark {
+  0%, 100% { opacity: 0.2; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+@keyframes hat-smoke {
+  0% { transform: translate(0, 40px) scale(0.2); opacity: 0.95; }
+  60% { opacity: 0.9; }
+  100% { transform: translate(var(--sx), var(--sy)) scale(1.6); opacity: 0; }
+}
+@keyframes hat-burst {
+  0% { transform: translate(0, 20px) scale(0.3) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--bx), var(--by)) scale(1.3) rotate(180deg); opacity: 0; }
+}
+@keyframes hat-reveal {
+  0% { transform: translateY(40px) scale(0.2); opacity: 0; filter: blur(6px); }
+  50% { opacity: 1; filter: blur(0); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.wand-wave { animation: wand-wave 1040ms ease-in-out infinite; }
+.wand-spark { animation: wand-spark 520ms ease-in-out infinite; }
+.hat-smoke { animation: hat-smoke 900ms ease-out both; filter: blur(2px); }
+.hat-burst { animation: hat-burst 900ms ease-out both; }
+.hat-reveal { animation: hat-reveal 700ms cubic-bezier(0.2, 0.8, 0.3, 1.1) 200ms both; }
+
+/* Đua vịt: a little bob on the water while they race. */
+@keyframes duck-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(-4deg); }
+}
+.hat-shake { animation: hat-shake 480ms ease-in-out infinite; transform-origin: 50% 90%; }
+.hat-sparkle { animation: hat-sparkle 900ms ease-out infinite; }
+.duck-bob { display: inline-block; animation: duck-bob 360ms ease-in-out infinite; }
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.burst {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  white-space: nowrap;
+  animation: point-rise 850ms ease-out forwards;
+  z-index: 5;
+  text-shadow: 0 2px 0 #fff;
+}
+.burst-plus { color: var(--gold-ink); font-size: 1.35rem; }
+.burst-big { font-size: 1.9rem; }
+.burst-minus { color: var(--red-pen); font-size: 1.2rem; }
+.sparkle {
+  position: absolute;
+  pointer-events: none;
+  animation: sparkle 700ms ease-out forwards;
+}
+.sticker-hit {
+  animation: wobble 420ms ease;
+}
+.confetti {
+  position: fixed;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+  pointer-events: none;
+  z-index: 60;
+}
+.pop-in {
+  animation: pop-in 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burst { animation: point-rise 1ms linear forwards; }
+  .sparkle,
+  .confetti { display: none; }
+  .sticker-hit,
+  .pop-in { animation: none; }
+  .hat-shake, .hat-sparkle, .duck-bob, .wand-wave, .wand-spark, .hat-smoke, .hat-burst, .hat-reveal { animation: none; }
+  .sticker,
+  .btn { transition: none; }
+}
+
+dialog.sheet {
+  margin: auto;
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  border: none;
+  border-radius: 18px;
+  padding: 0;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(59, 42, 74, 0.25);
+}
+dialog.sheet-wide {
+  width: min(880px, calc(100vw - 24px));
+}
+dialog.sheet::backdrop {
+  background: rgba(59, 42, 74, 0.45);
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+  body::before,
+  .no-print {
+    display: none !important;
+  }
+}

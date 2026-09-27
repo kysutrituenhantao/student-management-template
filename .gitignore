@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# builds
+apps/web/.next/
+apps/web/out/
+apps/api/.generated/
+apps/api/.wrangler/
+apps/api/.dev.vars
+apps/api/wrangler.production.jsonc
+*.tsbuildinfo
+next-env.d.ts
+
+# tests
+coverage/
+e2e/test-results/
+e2e/playwright-report/
+
+# local env
+.env
+.env*.local
+
+# the reference screen recording from Zalo stays out of git
+*.mp4
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+
+conversation-with-teacher/
+
+# Screenshots from scripts/screenshot.mjs — look at them, never commit them.
+.screenshots/
