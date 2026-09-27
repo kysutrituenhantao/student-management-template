@@ -32,7 +32,7 @@ Ghi các mật khẩu vào một chỗ an toàn.
 2. Dán dòng này vào (chuột phải để dán) rồi bấm **Enter**:
 
    ```
-   irm https://raw.githubusercontent.com/haophuongwedding/student-management-template/master/setup/windows.ps1 | iex
+   irm https://raw.githubusercontent.com/kysutrituenhantao/student-management-template/master/setup/windows.ps1 | iex
    ```
 
 3. Nếu máy báo **cần khởi động lại**: khởi động lại, rồi làm lại đúng bước 1 và 2.
@@ -48,7 +48,7 @@ Cuối bước 1, cửa sổ Ubuntu tự mở:
 2. Khi thấy dòng chữ kết thúc bằng `$`, **chuột phải** để dán dòng lệnh (máy đã chép sẵn), Enter. Nếu cần gõ tay:
 
    ```
-   bash <(curl -fsSL https://raw.githubusercontent.com/haophuongwedding/student-management-template/master/setup/setup.sh)
+   bash <(curl -fsSL https://raw.githubusercontent.com/kysutrituenhantao/student-management-template/master/setup/setup.sh)
    ```
 
 3. Làm theo chữ trên màn hình. Máy sẽ nhờ cô:

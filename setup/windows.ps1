@@ -1,6 +1,6 @@
 # Windows half of the install. Run in PowerShell opened as administrator:
 #
-#   irm https://raw.githubusercontent.com/haophuongwedding/student-management-template/master/setup/windows.ps1 | iex
+#   irm https://raw.githubusercontent.com/kysutrituenhantao/student-management-template/master/setup/windows.ps1 | iex
 #
 # Installs WSL with Ubuntu 24.04 and Cursor, keeps the laptop awake on mains power even with the lid shut, then opens
 # Ubuntu with the Linux half (setup/setup.sh) on the clipboard. Safe to run again, e.g. after the restart WSL asks for.
@@ -10,7 +10,7 @@
 # Not 'Stop': in Windows PowerShell 5.1 that turns any text a native program (wsl.exe, winget) writes to stderr into a
 # fatal error, e.g. "WSL is not installed" on the very machine this script is here to fix. Exit codes are checked instead.
 $ErrorActionPreference = 'Continue'
-$Template = if ($env:LOPHOC_TEMPLATE) { $env:LOPHOC_TEMPLATE } else { 'haophuongwedding/student-management-template' }
+$Template = if ($env:LOPHOC_TEMPLATE) { $env:LOPHOC_TEMPLATE } else { 'kysutrituenhantao/student-management-template' }
 $Distro = 'Ubuntu-24.04'
 $LinuxLine = "bash <(curl -fsSL https://raw.githubusercontent.com/$Template/master/setup/setup.sh)"
 $env:WSL_UTF8 = '1' # wsl.exe prints UTF-16 otherwise, and -match finds nothing

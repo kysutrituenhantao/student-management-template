@@ -10,7 +10,7 @@
 # shellcheck disable=SC2024  # installer output goes to her own log: only the command needs sudo, not the file
 set -Eeuo pipefail
 
-TEMPLATE_REPO="${LOPHOC_TEMPLATE:-haophuongwedding/student-management-template}"
+TEMPLATE_REPO="${LOPHOC_TEMPLATE:-kysutrituenhantao/student-management-template}"
 APP_DIR="${LOPHOC_DIR:-$HOME/lop-hoc}"
 STATE_DIR="$HOME/.lop-hoc"
 REPO_NAME="${LOPHOC_REPO_NAME:-lop-hoc-hanh-phuc}"
